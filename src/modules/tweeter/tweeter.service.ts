@@ -7,8 +7,7 @@ import { PlanAndExecuteAgentExecutor } from 'langchain/experimental/plan_and_exe
 import { SerpAPI } from 'langchain/tools';
 import { Calculator } from 'langchain/tools/calculator';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
-import axios from 'axios';
-import qs from 'qs';
+import { TwitterApi } from 'twitter-api-v2';
 
 @Injectable()
 export class TweeterService {
@@ -18,71 +17,37 @@ export class TweeterService {
   async createTweet(news: NewsDto) {
     try {
       const openAIApiKey = await this.configService.get('openai.apiKey');
-      console.log('NEWS =>>>>> ', news);
       const template = this.configService.get('openai.promptTemplate');
-
       const promptTemplate = PromptTemplate.fromTemplate(template);
-
       const chatModel = new ChatOpenAI({
         temperature: 0.9,
         openAIApiKey: openAIApiKey,
       });
-
-      /*       const tools = [new Calculator(), new SerpAPI()];
-
-      const executor = await initializeAgentExecutorWithOptions(
-        tools,
-        chatModel,
-        {
-          agentType: 'openai-functions',
-          verbose: true,
-        },
-      );
-
-      const result = await executor.run(news.title);
-      console.log('RESULT =>>>>> ', result); */
       const chain = promptTemplate.pipe(chatModel);
-      console.log('NEWS =>>>>> ', news);
       const tweet = await chain.invoke({
         haber: news.title,
+        kaynak: news.author,
       });
+
       console.log(tweet.content);
+
+      return await this.postTweet(tweet.content);
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
     }
   }
 
-  async postTweet(tweetText: string): Promise<void> {
-    // Endpoint URL for Tweet creation
-    const endpointUrl = 'https://api.twitter.com/1.1/statuses/update.json';
-
-    // OAuth 1.0 Authentication details
-    const oauthData = {
-      consumer_key: 'YOUR_CONSUMER_KEY',
-      consumer_secret: 'YOUR_CONSUMER_SECRET',
-      token: 'YOUR_ACCESS_TOKEN',
-      token_secret: 'YOUR_ACCESS_TOKEN_SECRET',
-      // other oauth parameters like nonce, timestamp etc., should be generated per request
-    };
-
-    // OAuth 1.0 can be a bit tricky, so consider using a library like 'oauth-1.0a' to generate headers
-
-    // Generate OAuth headers
-    const oauthHeaders = ''; // Replace with headers generated using OAuth library
-
+  async postTweet(tweetText: string): Promise<any> {
+    const twitterClient = new TwitterApi({
+      appKey: this.configService.get('twitter.consumerKey'),
+      appSecret: this.configService.get('twitter.consumerSecret'),
+      accessToken: this.configService.get('twitter.accessTokenKey'), // oauth token from previous step (link generation)
+      accessSecret: this.configService.get('twitter.accessTokenSecret'), // oauth token secret from previous step (link generation)
+    });
     try {
-      const response = await axios.post(
-        endpointUrl,
-        qs.stringify({ status: tweetText }),
-        {
-          headers: {
-            Authorization: oauthHeaders,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      );
-
-      console.log('Tweeted successfully:', response.data);
+      const result = await twitterClient.v2.tweet(tweetText);
+      console.log('Tweeted successfully:', result.data);
+      return result.data;
     } catch (error) {
       console.error('Failed to tweet:', error);
     }
