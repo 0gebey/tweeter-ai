@@ -27,7 +27,7 @@ export class TweeterService {
 
       console.log(tweet.content);
 
-      return await this.postTweet(tweet.content);
+      return await this.postTweet(tweet.content.trim().slice(1, -1));
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
     }
