@@ -7,6 +7,8 @@ import { PlanAndExecuteAgentExecutor } from 'langchain/experimental/plan_and_exe
 import { SerpAPI } from 'langchain/tools';
 import { Calculator } from 'langchain/tools/calculator';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
+import axios from 'axios';
+import qs from 'qs';
 
 @Injectable()
 export class TweeterService {
@@ -17,10 +19,7 @@ export class TweeterService {
     try {
       const openAIApiKey = await this.configService.get('openai.apiKey');
       console.log('NEWS =>>>>> ', news);
-      const template = `Sen Türkiye'de yaşayan erkek ve siyasi olarak ılımlı sağ,
-    milliyetçi orta yaşlı, üniversite mezunu olan bir gazetecisin.
-    Sana temin edilen haberleri kendi profiline uygun olarak yorumlayıp 140 karakteri geçmeyen yeni tweetler üreteceksin.
-    haber: {haber}`;
+      const template = this.configService.get('openai.promptTemplate');
 
       const promptTemplate = PromptTemplate.fromTemplate(template);
 
@@ -50,6 +49,42 @@ export class TweeterService {
       console.log(tweet.content);
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
+    }
+  }
+
+  async postTweet(tweetText: string): Promise<void> {
+    // Endpoint URL for Tweet creation
+    const endpointUrl = 'https://api.twitter.com/1.1/statuses/update.json';
+
+    // OAuth 1.0 Authentication details
+    const oauthData = {
+      consumer_key: 'YOUR_CONSUMER_KEY',
+      consumer_secret: 'YOUR_CONSUMER_SECRET',
+      token: 'YOUR_ACCESS_TOKEN',
+      token_secret: 'YOUR_ACCESS_TOKEN_SECRET',
+      // other oauth parameters like nonce, timestamp etc., should be generated per request
+    };
+
+    // OAuth 1.0 can be a bit tricky, so consider using a library like 'oauth-1.0a' to generate headers
+
+    // Generate OAuth headers
+    const oauthHeaders = ''; // Replace with headers generated using OAuth library
+
+    try {
+      const response = await axios.post(
+        endpointUrl,
+        qs.stringify({ status: tweetText }),
+        {
+          headers: {
+            Authorization: oauthHeaders,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+
+      console.log('Tweeted successfully:', response.data);
+    } catch (error) {
+      console.error('Failed to tweet:', error);
     }
   }
 }
