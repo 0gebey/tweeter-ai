@@ -27,8 +27,6 @@ export class ScraperService {
         newsInTR.data.articles.length - 1
       ] as NewsDto;
       const lastNewsInDB = await this.newsModel.findOne().exec();
-
-      console.log('LAST NEWS', lastNews, lastNewsInDB);
       if (lastNewsInDB && lastNews.title === lastNewsInDB.title) {
         console.log('No new news => ', lastNews.title);
         return;

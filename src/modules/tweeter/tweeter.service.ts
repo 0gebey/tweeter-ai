@@ -3,10 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { NewsDto } from '../../dtos/news';
 import { PromptTemplate } from 'langchain/prompts';
-import { PlanAndExecuteAgentExecutor } from 'langchain/experimental/plan_and_execute';
-import { SerpAPI } from 'langchain/tools';
-import { Calculator } from 'langchain/tools/calculator';
-import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { TwitterApi } from 'twitter-api-v2';
 
 @Injectable()
