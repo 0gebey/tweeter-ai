@@ -33,25 +33,25 @@ export class ScraperService {
         'https://newsapi.org/v2/top-headlines?country=tr&apiKey=' +
           this.configService.get('news.apiKey'),
       );
-      const last5News = newsInTR.data.articles.slice(-5) as NewsDto[];
+      const last10News = newsInTR.data.articles.slice(-10) as NewsDto[];
       // Get last 5 news in DB
       const lastNewsInDB = await this.newsModel
         .find()
         .sort({ _id: -1 })
-        .limit(5)
+        .limit(10)
         .exec();
       // If last 5 news in DB are the same with the last 5 news in API, do nothing
       if (
         lastNewsInDB.length > 0 &&
         lastNewsInDB.every(
-          (news, index) => news.title === last5News[index].title,
+          (news, index) => news.title === last10News[index].title,
         )
       ) {
         console.log('No new news');
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
-        last5News.forEach(async (news: NewsDto) => {
+        last10News.forEach(async (news: NewsDto) => {
           // If the news is already in DB, do nothing
           if (lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)) {
             console.log('News already in DB', news.title);
