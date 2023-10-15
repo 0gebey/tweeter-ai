@@ -5,17 +5,18 @@ import { NewsDto } from '../../dtos/news';
 import { PromptTemplate } from 'langchain/prompts';
 import { TwitterApi } from 'twitter-api-v2';
 import { LLMChain } from 'langchain/chains';
+import { NewsType } from '../../enums/newsType';
 
 @Injectable()
 export class TweeterService {
   constructor(private configService: ConfigService) {}
 
   // Your tweeter logic here
-  async createTweet(news: NewsDto, isSportNews = false) {
+  async createTweet(news: NewsDto, newsType: NewsType = NewsType.News) {
     try {
       const openAIApiKey = await this.configService.get('openai.apiKey');
       const template = this.configService.get(
-        isSportNews ? 'openai.sportsPromptTemplate' : 'openai.promptTemplate',
+        `twitter.${newsType}.promptTemplate`,
       );
       const promptTemplate = PromptTemplate.fromTemplate(template);
       const chatModel = new ChatOpenAI({
@@ -30,7 +31,7 @@ export class TweeterService {
 
       console.log(tweet.content);
 
-      return await this.postTweet(tweet.content.trim(), isSportNews);
+      return await this.postTweet(tweet.content.trim(), newsType);
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
     }
@@ -57,25 +58,13 @@ export class TweeterService {
     return result.text.trim();
   }
 
-  async postTweet(tweetText: string, isSportsNews = false): Promise<any> {
+  async postTweet(tweetText: string, newsType: NewsType): Promise<any> {
     const twitterClient = new TwitterApi({
-      appKey: this.configService.get(
-        isSportsNews ? 'twitter.sportsConsumerKey' : 'twitter.consumerKey',
-      ),
-      appSecret: this.configService.get(
-        isSportsNews
-          ? 'twitter.sportsConsumerSecret'
-          : 'twitter.consumerSecret',
-      ),
-      accessToken: this.configService.get(
-        isSportsNews
-          ? 'twitter.sportsAccessTokenKey'
-          : 'twitter.accessTokenKey',
-      ),
+      appKey: this.configService.get(`twitter.${newsType}.consumerKey`),
+      appSecret: this.configService.get(`twitter.${newsType}.consumerSecret`),
+      accessToken: this.configService.get(`twitter.${newsType}.accessTokenKey`),
       accessSecret: this.configService.get(
-        isSportsNews
-          ? 'twitter.sportsAccessTokenSecret'
-          : 'twitter.accessTokenSecret',
+        `twitter.${newsType}.accessTokenSecret`,
       ),
     });
     try {
