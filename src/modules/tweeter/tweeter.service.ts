@@ -5,7 +5,6 @@ import { NewsDto } from '../../dtos/news';
 import { PromptTemplate } from 'langchain/prompts';
 import { TwitterApi } from 'twitter-api-v2';
 import { LLMChain } from 'langchain/chains';
-import { OpenAI } from 'langchain/llms/openai';
 
 @Injectable()
 export class TweeterService {
@@ -28,10 +27,6 @@ export class TweeterService {
       });
 
       console.log(tweet.content);
-      /* if (tweet.content.trim().length > 280) {
-        this.createTweet(news);
-        return;
-      } */
 
       return await this.postTweet(tweet.content.trim());
     } catch (error) {
@@ -64,8 +59,8 @@ export class TweeterService {
     const twitterClient = new TwitterApi({
       appKey: this.configService.get('twitter.consumerKey'),
       appSecret: this.configService.get('twitter.consumerSecret'),
-      accessToken: this.configService.get('twitter.accessTokenKey'), // oauth token from previous step (link generation)
-      accessSecret: this.configService.get('twitter.accessTokenSecret'), // oauth token secret from previous step (link generation)
+      accessToken: this.configService.get('twitter.accessTokenKey'),
+      accessSecret: this.configService.get('twitter.accessTokenSecret'),
     });
     try {
       if (tweetText.length > 280) throw new Error('Tweet is too long');

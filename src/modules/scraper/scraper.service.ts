@@ -20,7 +20,7 @@ export class ScraperService {
   async newsScraper() {
     try {
       const newsInTR = await axios.get(
-        'https://newsapi.org/v2/top-headlines?country=tr&category=politics&apiKey=' +
+        'https://newsapi.org/v2/top-headlines?country=tr&apiKey=' +
           this.configService.get('news.apiKey'),
       );
       const last5News = newsInTR.data.articles.slice(-5) as NewsDto[];
@@ -69,7 +69,7 @@ export class ScraperService {
         });
       }
     } catch (error) {
-      console.error('ERROR WHILE RETRIEVING THE NEWS', error);
+      console.error('Error in newsScraper: ', error);
     }
   }
 

@@ -1,7 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ScraperService } from './scraper.service';
 import { ConfigService } from '@nestjs/config';
-import { TwitterApi } from 'twitter-api-v2';
 import { NewsDto } from '../../dtos/news';
 
 @Controller('scraper')
@@ -13,7 +12,6 @@ export class ScraperController {
   @Get()
   async newsScraper() {
     this.scraperService.newsScraper();
-    // Your scraper logic here
   }
 
   @Get('isPolitics')
