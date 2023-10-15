@@ -2,10 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { Source } from './source';
 
-export type NewsDocument = HydratedDocument<News>;
+export type SportsNewsDocument = HydratedDocument<SportsNews>;
 
 @Schema({ timestamps: true })
-export class News {
+export class SportsNews {
   @Prop({ type: Source, required: true })
   source: Source;
 
@@ -31,4 +31,4 @@ export class News {
   content?: string;
 }
 
-export const NewsSchema = SchemaFactory.createForClass(News);
+export const SportsNewsSchema = SchemaFactory.createForClass(SportsNews);

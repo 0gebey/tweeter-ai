@@ -11,10 +11,12 @@ export class TweeterService {
   constructor(private configService: ConfigService) {}
 
   // Your tweeter logic here
-  async createTweet(news: NewsDto) {
+  async createTweet(news: NewsDto, isSportNews = false) {
     try {
       const openAIApiKey = await this.configService.get('openai.apiKey');
-      const template = this.configService.get('openai.promptTemplate');
+      const template = this.configService.get(
+        isSportNews ? 'openai.sportsPromptTemplate' : 'openai.promptTemplate',
+      );
       const promptTemplate = PromptTemplate.fromTemplate(template);
       const chatModel = new ChatOpenAI({
         temperature: 0.9,
@@ -28,7 +30,7 @@ export class TweeterService {
 
       console.log(tweet.content);
 
-      return await this.postTweet(tweet.content.trim());
+      return await this.postTweet(tweet.content.trim(), isSportNews);
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
     }
@@ -55,12 +57,26 @@ export class TweeterService {
     return result.text.trim();
   }
 
-  async postTweet(tweetText: string): Promise<any> {
+  async postTweet(tweetText: string, isSportsNews = false): Promise<any> {
     const twitterClient = new TwitterApi({
-      appKey: this.configService.get('twitter.consumerKey'),
-      appSecret: this.configService.get('twitter.consumerSecret'),
-      accessToken: this.configService.get('twitter.accessTokenKey'),
-      accessSecret: this.configService.get('twitter.accessTokenSecret'),
+      appKey: this.configService.get(
+        isSportsNews ? 'twitter.sportsConsumerKey' : 'twitter.consumerKey',
+      ),
+      appSecret: this.configService.get(
+        isSportsNews
+          ? 'twitter.sportsConsumerSecret'
+          : 'twitter.consumerSecret',
+      ),
+      accessToken: this.configService.get(
+        isSportsNews
+          ? 'twitter.sportsAccessTokenKey'
+          : 'twitter.accessTokenKey',
+      ),
+      accessSecret: this.configService.get(
+        isSportsNews
+          ? 'twitter.sportsAccessTokenSecret'
+          : 'twitter.accessTokenSecret',
+      ),
     });
     try {
       if (tweetText.length > 280) throw new Error('Tweet is too long');

@@ -14,6 +14,11 @@ export class ScraperController {
     this.scraperService.newsScraper();
   }
 
+  @Get('sports')
+  async sportsNewsScraper() {
+    this.scraperService.sportsNewsScraper();
+  }
+
   @Get('isPolitics')
   async isPolitics() {
     try {
