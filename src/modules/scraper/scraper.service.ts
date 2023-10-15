@@ -26,14 +26,13 @@ export class ScraperService {
       const lastNews = newsInTR.data.articles[
         newsInTR.data.articles.length - 1
       ] as NewsDto;
-      const lastNewsInDB = await this.newsModel.findOne().exec();
-      if (lastNewsInDB && lastNews.title === lastNewsInDB.title) {
+      // Get last news in DB
+      const lastNewsInDB = await this.newsModel.findOne().sort({ _id: -1 });
+      if (lastNewsInDB?.title && lastNews.title === lastNewsInDB.title) {
         console.log('No new news => ', lastNews.title);
         return;
       } else {
         console.log('New news', lastNews.title);
-        /* const deleted = await this.newsModel.deleteMany({}).exec();
-        console.log('Deleted => ', deleted); */
         const tweet = await this.tweeterService.createTweet(lastNews);
         console.log('Tweet created => ', tweet);
         const news = new this.newsModel(lastNews);
