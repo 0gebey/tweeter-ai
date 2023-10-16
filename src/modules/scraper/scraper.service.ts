@@ -25,6 +25,7 @@ export class ScraperService {
     @InjectModel(EntertainmentNews.name)
     private entertainmentNewsModel: Model<EntertainmentNewsDocument>,
   ) {}
+  TIMEOUT = 72000;
 
   @Cron('*/15 * * * *')
   async newsScraper() {
@@ -51,35 +52,38 @@ export class ScraperService {
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
-        last10News.forEach(async (news: NewsDto) => {
+        for (const news of last10News) {
           // If the news is already in DB, do nothing
-          setTimeout(async () => {
-            if (
-              lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)
-            ) {
-              console.log('News already in DB', news.title);
-              return;
-            }
-            // Else, save the news in DB
-            const createdNews = new this.newsModel(news);
-            const savedNews = await createdNews.save();
-            console.log('News saved => ', savedNews);
-            // Check if the news is about politics
-            const isPolitical =
-              await this.tweeterService.isTheNewsAboutPolitics(news);
-            // If it is, tweet about it
-            console.log(
-              'isPolitical => ',
-              isPolitical,
-              isPolitical.toLowerCase() === 'yes',
-            );
-            if (isPolitical?.toLowerCase() === 'yes') {
-              console.log('News is about politics');
-              const tweet = await this.tweeterService.createTweet(news);
-              console.log('Tweet created => ', tweet);
-            }
-          }, 72000);
-        });
+          // Wait for 1.5 minutes between each news
+          await new Promise((resolve) =>
+            setTimeout(async () => {
+              if (
+                lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)
+              ) {
+                console.log('News already in DB', news.title);
+                resolve(false);
+              }
+              // Else, save the news in DB
+              const createdNews = new this.newsModel(news);
+              const savedNews = await createdNews.save();
+              console.log('News saved => ', savedNews);
+              // Check if the news is about politics
+              const isPolitical =
+                await this.tweeterService.isTheNewsAboutPolitics(news);
+              // If it is, tweet about it
+              console.log(
+                'isPolitical => ',
+                isPolitical,
+                isPolitical.toLowerCase() === 'yes',
+              );
+              if (isPolitical?.toLowerCase() === 'yes') {
+                console.log('News is about politics');
+                const tweet = await this.tweeterService.createTweet(news);
+                resolve(console.log('Tweet created => ', tweet));
+              }
+            }, this.TIMEOUT),
+          );
+        }
       }
     } catch (error) {
       console.error('Error in newsScraper: ', error);
@@ -111,28 +115,30 @@ export class ScraperService {
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
-        last10News.forEach(async (news: NewsDto) => {
+        for (const news of last10News) {
           // If the news is already in DB, do nothing
-          // Wait for 5 minutes between each news
-          setTimeout(async () => {
-            if (
-              lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)
-            ) {
-              console.log('Sports news already in DB', news.title);
-              return;
-            }
-            // Else, save the news in DB
-            const createdNews = new this.sportsNewsModel(news);
-            const savedNews = await createdNews.save();
-            console.log('Sports news saved => ', savedNews);
+          // Wait for 1.5 minutes between each news
+          await new Promise((resolve) =>
+            setTimeout(async () => {
+              if (
+                lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)
+              ) {
+                console.log('Sports news already in DB', news.title);
+                resolve(false);
+              }
+              // Else, save the news in DB
+              const createdNews = new this.sportsNewsModel(news);
+              const savedNews = await createdNews.save();
+              console.log('Sports news saved => ', savedNews);
 
-            const tweet = await this.tweeterService.createTweet(
-              news,
-              NewsType.Sports,
-            );
-            console.log('Sport tweet created => ', tweet);
-          }, 72000);
-        });
+              const tweet = await this.tweeterService.createTweet(
+                news,
+                NewsType.Sports,
+              );
+              resolve(console.log('Sport tweet created => ', tweet));
+            }, 72000),
+          );
+        }
       }
     } catch (error) {
       console.error('Error in Sport newsScraper: ', error);
@@ -162,26 +168,30 @@ export class ScraperService {
         console.log('No new entertainment news');
         return;
       } else {
-        last10News.forEach(async (news: NewsDto) => {
-          setTimeout(async () => {
-            if (
-              lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)
-            ) {
-              console.log('Entertainment news already in DB', news.title);
-              return;
-            }
-            // Else, save the news in DB
-            const createdNews = new this.entertainmentNewsModel(news);
-            const savedNews = await createdNews.save();
-            console.log('Entertainment news saved => ', savedNews);
+        for (const news of last10News) {
+          // If the news is already in DB, do nothing
+          // Wait for 1.5 minutes between each news
+          await new Promise((resolve) =>
+            setTimeout(async () => {
+              if (
+                lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)
+              ) {
+                console.log('Entertainment news already in DB', news.title);
+                resolve(false);
+              }
+              // Else, save the news in DB
+              const createdNews = new this.entertainmentNewsModel(news);
+              const savedNews = await createdNews.save();
+              console.log('Entertainment news saved => ', savedNews);
 
-            const tweet = await this.tweeterService.createTweet(
-              news,
-              NewsType.Entertainment,
-            );
-            console.log('Entertainment tweet created => ', tweet);
-          }, 72000);
-        });
+              const tweet = await this.tweeterService.createTweet(
+                news,
+                NewsType.Entertainment,
+              );
+              resolve(console.log('Entertainment tweet created => ', tweet));
+            }, 72000),
+          );
+        }
       }
     } catch (error) {
       console.error('Error in Entertainment newsScraper: ', error);
