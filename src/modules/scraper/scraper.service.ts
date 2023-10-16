@@ -26,7 +26,7 @@ export class ScraperService {
     private entertainmentNewsModel: Model<EntertainmentNewsDocument>,
   ) {}
 
-  @Cron('*/30 * * * *')
+  @Cron('*/35 * * * *')
   async newsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -83,7 +83,7 @@ export class ScraperService {
     }
   }
 
-  @Cron('*/30 * * * *')
+  @Cron('*/50 * * * *')
   async sportsNewsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -131,7 +131,7 @@ export class ScraperService {
     }
   }
 
-  @Cron('*/45 * * * *')
+  @Cron('*/50 * * * *')
   async entertainmentNewsScraper() {
     try {
       const newsInTR = await axios.get(
