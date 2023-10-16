@@ -3,7 +3,11 @@ export default async () => ({
     apiKey: process.env.OPENAI_API_KEY,
   },
   news: {
-    apiKey: process.env.NEWS_API_KEY,
+    tr: {
+      newsApiKey: process.env.NEWS_API_KEY,
+      newsSportsApiKey: process.env.NEWS_SPORTS_API_KEY,
+      newsEntertainmentApiKey: process.env.NEWS_ENTERTAINMENT_API_KEY,
+    },
   },
   twitter: {
     news: {
