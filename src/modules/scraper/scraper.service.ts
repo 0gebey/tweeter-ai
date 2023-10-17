@@ -27,7 +27,7 @@ export class ScraperService {
   ) {}
   TIMEOUT = 72000;
 
-  @Cron('*/15 * * * *')
+  @Cron('*/20 * * * *')
   async newsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -41,14 +41,12 @@ export class ScraperService {
         .sort({ _id: -1 })
         .limit(10)
         .exec();
-      // If last 5 news in DB are the same with the last 5 news in API, do nothing
+      // If last 10 news in DB are the same with the last 10 news in API, do nothing
       if (
         lastNewsInDB.length > 0 &&
-        lastNewsInDB.every(
-          (news, index) => news.title === last10News[index].title,
-        )
+        this.isNewNewsPresent(lastNewsInDB, last10News)
       ) {
-        console.log('No new news');
+        console.log('No new entertainment news');
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
@@ -57,7 +55,7 @@ export class ScraperService {
           // Wait for 1.5 minutes between each news
           /*           await new Promise((resolve) =>
             setTimeout(async () => { */
-          if (lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)) {
+          if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
             console.log('News already in DB', news.title);
             /* resolve(false); */
           }
@@ -93,7 +91,7 @@ export class ScraperService {
     }
   }
 
-  @Cron('*/15 * * * *')
+  @Cron('*/20 * * * *')
   async sportsNewsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -110,11 +108,9 @@ export class ScraperService {
       // If last 5 news in DB are the same with the last 5 news in API, do nothing
       if (
         lastNewsInDB.length > 0 &&
-        lastNewsInDB.every(
-          (news, index) => news.title === last10News[index].title,
-        )
+        this.isNewNewsPresent(lastNewsInDB, last10News)
       ) {
-        console.log('No new sports news');
+        console.log('No new entertainment news');
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
@@ -123,7 +119,7 @@ export class ScraperService {
           // Wait for 1.5 minutes between each news
           /*          await new Promise((resolve) =>
             setTimeout(async () => { */
-          if (lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)) {
+          if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
             console.log('Sports news already in DB', news.title);
             /* resolve(false); */
             return;
@@ -150,7 +146,7 @@ export class ScraperService {
     }
   }
 
-  @Cron('*/15 * * * *')
+  @Cron('*/20 * * * *')
   async entertainmentNewsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -166,9 +162,7 @@ export class ScraperService {
 
       if (
         lastNewsInDB.length > 0 &&
-        lastNewsInDB.every(
-          (news, index) => news.title === last10News[index].title,
-        )
+        this.isNewNewsPresent(lastNewsInDB, last10News)
       ) {
         console.log('No new entertainment news');
         return;
@@ -178,7 +172,7 @@ export class ScraperService {
           // Wait for 1.5 minutes between each news
           /*           await new Promise((resolve) =>
             setTimeout(async () => { */
-          if (lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)) {
+          if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
             console.log('Entertainment news already in DB', news.title);
             return;
             /*   resolve(false); */
@@ -204,6 +198,13 @@ export class ScraperService {
       console.error('Error in Entertainment newsScraper: ', error);
       return;
     }
+  }
+
+  isNewNewsPresent(oldNews: News[], newNews: NewsDto[]): boolean {
+    // Check if any item in newNews doesn't have a match in oldNews
+    return newNews.some(
+      (newsB) => !oldNews.some((newsA) => newsB.title === newsA.title),
+    );
   }
 
   async isPolitical(news: NewsDto) {
