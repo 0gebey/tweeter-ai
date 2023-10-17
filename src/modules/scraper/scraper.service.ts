@@ -42,22 +42,16 @@ export class ScraperService {
         .limit(10)
         .exec();
       // If last 10 news in DB are the same with the last 10 news in API, do nothing
-      if (
-        lastNewsInDB.length > 0 &&
-        this.isNewNewsPresent(lastNewsInDB, last10News)
-      ) {
-        console.log('No new entertainment news');
+      if (!this.isNewNewsPresent(lastNewsInDB, last10News)) {
+        console.log('No new news');
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
         for (const news of last10News) {
           // If the news is already in DB, do nothing
-          // Wait for 1.5 minutes between each news
-          /*           await new Promise((resolve) =>
-            setTimeout(async () => { */
           if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
             console.log('News already in DB', news.title);
-            /* resolve(false); */
+            continue;
           }
           // Else, save the news in DB
           const createdNews = new this.newsModel(news);
@@ -77,11 +71,7 @@ export class ScraperService {
             console.log('News is about politics');
             const tweet = await this.tweeterService.createTweet(news);
             console.log('Tweet created => ', tweet);
-            return;
-            /*                 resolve(console.log('Tweet created => ', tweet));
-              }
-            }, this.TIMEOUT),
-          ); */
+            continue;
           }
         }
       }
@@ -106,23 +96,15 @@ export class ScraperService {
         .limit(10)
         .exec();
       // If last 5 news in DB are the same with the last 5 news in API, do nothing
-      if (
-        lastNewsInDB.length > 0 &&
-        this.isNewNewsPresent(lastNewsInDB, last10News)
-      ) {
-        console.log('No new entertainment news');
+      if (!this.isNewNewsPresent(lastNewsInDB, last10News)) {
+        console.log('No new sports news');
         return;
       } else {
         // Else, save the new news in DB and tweet about it if it is about politics
         for (const news of last10News) {
-          // If the news is already in DB, do nothing
-          // Wait for 1.5 minutes between each news
-          /*          await new Promise((resolve) =>
-            setTimeout(async () => { */
           if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
             console.log('Sports news already in DB', news.title);
-            /* resolve(false); */
-            return;
+            continue;
           }
           // Else, save the news in DB
           const createdNews = new this.sportsNewsModel(news);
@@ -134,10 +116,6 @@ export class ScraperService {
             NewsType.Sports,
           );
           console.log('Sport tweet created => ', tweet);
-          return;
-          /*   resolve(console.log('Sport tweet created => ', tweet));
-            }, 72000),
-          ); */
         }
       }
     } catch (error) {
@@ -160,22 +138,15 @@ export class ScraperService {
         .limit(10)
         .exec();
 
-      if (
-        lastNewsInDB.length > 0 &&
-        this.isNewNewsPresent(lastNewsInDB, last10News)
-      ) {
+      if (!this.isNewNewsPresent(lastNewsInDB, last10News)) {
         console.log('No new entertainment news');
         return;
       } else {
         for (const news of last10News) {
           // If the news is already in DB, do nothing
-          // Wait for 1.5 minutes between each news
-          /*           await new Promise((resolve) =>
-            setTimeout(async () => { */
           if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
             console.log('Entertainment news already in DB', news.title);
-            return;
-            /*   resolve(false); */
+            continue;
           }
           // Else, save the news in DB
           const createdNews = new this.entertainmentNewsModel(news);
@@ -187,11 +158,6 @@ export class ScraperService {
             NewsType.Entertainment,
           );
           console.log('Entertainment tweet created => ', tweet);
-          return;
-          /*               resolve(console.log('Entertainment tweet created => ', tweet));
-            }, 72000),
-          );
-        } */
         }
       }
     } catch (error) {
@@ -201,6 +167,7 @@ export class ScraperService {
   }
 
   isNewNewsPresent(oldNews: News[], newNews: NewsDto[]): boolean {
+    if (oldNews.length === 0) return true;
     // Check if any item in newNews doesn't have a match in oldNews
     return newNews.some(
       (newsB) => !oldNews.some((newsA) => newsB.title === newsA.title),
