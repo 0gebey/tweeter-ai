@@ -27,7 +27,7 @@ export class ScraperService {
   ) {}
   TIMEOUT = 72000;
 
-  @Cron('*/20 * * * *')
+  @Cron('*/30 * * * *')
   async newsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -81,7 +81,7 @@ export class ScraperService {
     }
   }
 
-  @Cron('*/20 * * * *')
+  @Cron('*/30 * * * *')
   async sportsNewsScraper() {
     try {
       const newsInTR = await axios.get(
@@ -124,7 +124,7 @@ export class ScraperService {
     }
   }
 
-  @Cron('*/20 * * * *')
+  @Cron('*/30 * * * *')
   async entertainmentNewsScraper() {
     try {
       const newsInTR = await axios.get(
