@@ -8,7 +8,7 @@ export default async () => ({
       sportsNewsApiKey: process.env.NEWS_SPORTS_API_KEY,
       entertainmentNewsApiKey: process.env.NEWS_ENTERTAINMENT_API_KEY,
     },
-    usa: {
+    us: {
       politicsNewsApiKey: process.env.NEWS_USA_API_KEY,
       sportsNewsApiKey: process.env.NEWS_SPORTS_USA_API_KEY,
       entertainmentNewsApiKey: process.env.NEWS_ENTERTAINMENT_USA_API_KEY,

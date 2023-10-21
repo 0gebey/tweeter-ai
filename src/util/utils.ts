@@ -34,7 +34,6 @@ export const isNewNewsPresent = (
 export const getSourceUrl = async (rssFeedUrl: string): Promise<string> => {
   try {
     const parsedURL = url.parse(rssFeedUrl, true);
-    console.log('Parsed URL:', parsedURL);
 
     // Split the pathname by '/' and find the segment that starts with 'CBMi'
     const encodedSegment = parsedURL.pathname
@@ -57,7 +56,12 @@ export const getSourceUrl = async (rssFeedUrl: string): Promise<string> => {
 
     // Remove any leading characters that don't belong to a standard URL
     actualURL = actualURL.replace(/^[^https]+/, '');
-    console.log('Actual URL:', actualURL);
+    // https://ay.live/api/?api=386c567d1cd756be36107fffe7a9462bd07bbae3&url=yourdestinationlink.com&alias=&format=text&ct=1
+    /*     const shortenedURL = await axios.get(
+      `https://ay.live/api/?api=386c567d1cd756be36107fffe7a9462bd07bbae3&url=${actualURL}&alias=&format=text&ct=1`,
+    );
+    console.log('shortenedURL', shortenedURL.data);
+    return shortenedURL.data; */
     return actualURL;
   } catch (error) {
     console.error('Error fetching or parsing RSS feed:', error);

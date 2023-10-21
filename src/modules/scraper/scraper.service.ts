@@ -38,10 +38,16 @@ export class ScraperService {
 
       const newsArticles: NewsDto[] = newsResponse.data.articles.slice(-10);
       const lastNewsInDB: News[] = await this.newsModel
-        .find({ category, country })
+        .find()
+        .where('country')
+        .equals(country)
+        .where('category')
+        .equals(category)
         .sort({ _id: -1 })
         .limit(10)
         .exec();
+
+      console.log('lastNewsInDB =>', lastNewsInDB);
 
       if (!isNewNewsPresent(lastNewsInDB, newsArticles)) {
         console.log('No new news.');
