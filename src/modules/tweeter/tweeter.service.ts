@@ -5,18 +5,24 @@ import { NewsDto } from '../../dtos/news';
 import { PromptTemplate } from 'langchain/prompts';
 import { TwitterApi } from 'twitter-api-v2';
 import { LLMChain } from 'langchain/chains';
-import { NewsType } from '../../enums/newsType';
+import { NewsCategory } from '../../enums/newsCategory';
+import { NewsCountry } from '../../enums/newsCountry';
+import { getImageAsBuffer, getSourceUrl } from '../../util/utils';
 
 @Injectable()
 export class TweeterService {
   constructor(private configService: ConfigService) {}
 
   // Your tweeter logic here
-  async createTweet(news: NewsDto, newsType: NewsType = NewsType.News) {
+  async createTweet(
+    news: NewsDto,
+    country: NewsCountry = NewsCountry.Turkey,
+    category: NewsCategory = NewsCategory.Politics,
+  ) {
     try {
       const openAIApiKey = await this.configService.get('openai.apiKey');
       const template = this.configService.get(
-        `twitter.${newsType}.promptTemplate`,
+        `twitter.${country}.${category}.promptTemplate`,
       );
       const promptTemplate = PromptTemplate.fromTemplate(template);
       const chatModel = new ChatOpenAI({
@@ -24,14 +30,24 @@ export class TweeterService {
         openAIApiKey: openAIApiKey,
       });
       const chain = promptTemplate.pipe(chatModel);
+      if (news.url.startsWith('https://news.google.com/rss/articles')) {
+        news.url = await getSourceUrl(news.url);
+      }
       const tweet = await chain.invoke({
-        haber: news.title,
-        kaynak: news.author,
+        news: news.title,
+        description: news.description,
+        source: news.author,
+        url: news.url,
       });
 
       console.log(tweet.content);
 
-      return await this.postTweet(tweet.content.trim(), newsType);
+      return await this.postTweet(
+        news,
+        tweet.content.trim(),
+        country,
+        category,
+      );
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
     }
@@ -58,22 +74,80 @@ export class TweeterService {
     return result.text.trim();
   }
 
-  async postTweet(tweetText: string, newsType: NewsType): Promise<any> {
+  async fetchMediaId(
+    news: NewsDto,
+    twitterClient: TwitterApi,
+  ): Promise<string | undefined> {
+    if (news.urlToImage) {
+      const image = await getImageAsBuffer(news.urlToImage);
+      return twitterClient.v1.uploadMedia(image);
+    }
+    return undefined;
+  }
+
+  async postTweetWithMedia(
+    tweetText: string,
+    mediaId: string,
+    twitterClient: TwitterApi,
+  ): Promise<any> {
+    return twitterClient.v2.tweet(tweetText, {
+      media: {
+        media_ids: [mediaId],
+      },
+    });
+  }
+
+  async postTweetWithoutMedia(
+    tweetText: string,
+    twitterClient: TwitterApi,
+  ): Promise<any> {
+    return twitterClient.v2.tweet(tweetText);
+  }
+
+  async postTweet(
+    news: NewsDto,
+    tweetText: string,
+    country: NewsCountry,
+    category: NewsCategory,
+  ): Promise<any> {
     const twitterClient = new TwitterApi({
-      appKey: this.configService.get(`twitter.${newsType}.consumerKey`),
-      appSecret: this.configService.get(`twitter.${newsType}.consumerSecret`),
-      accessToken: this.configService.get(`twitter.${newsType}.accessTokenKey`),
+      appKey: this.configService.get(
+        `twitter.${country}.${category}.consumerKey`,
+      ),
+      appSecret: this.configService.get(
+        `twitter.${country}.${category}.consumerSecret`,
+      ),
+      accessToken: this.configService.get(
+        `twitter.${country}.${category}.accessTokenKey`,
+      ),
       accessSecret: this.configService.get(
-        `twitter.${newsType}.accessTokenSecret`,
+        `twitter.${country}.${category}.accessTokenSecret`,
       ),
     });
+
     try {
-      if (tweetText.length > 280) throw new Error('Tweet is too long');
-      const result = await twitterClient.v2.tweet(tweetText);
-      console.log('Tweeted successfully:', result.data);
-      return result.data;
+      if (tweetText.length > 280) {
+        throw new Error('Tweet is too long');
+      }
+
+      const mediaId = await this.fetchMediaId(news, twitterClient);
+
+      if (mediaId) {
+        const result = await this.postTweetWithMedia(
+          tweetText,
+          mediaId,
+          twitterClient,
+        );
+        return result.data;
+      } else {
+        const result = await this.postTweetWithoutMedia(
+          tweetText,
+          twitterClient,
+        );
+        return result.data;
+      }
     } catch (error) {
-      console.error('Failed to tweet:', error);
+      console.error('Tweet Error:', error.message);
     }
   }
 }

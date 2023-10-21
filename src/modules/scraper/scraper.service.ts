@@ -1,18 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
 import { TweeterService } from '../tweeter/tweeter.service';
 import { News, NewsDocument } from '../../schemas/news';
-import { SportsNews, SportsNewsDocument } from '../../schemas/sportsNews';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { NewsDto } from '../../dtos/news';
-import {
-  EntertainmentNews,
-  EntertainmentNewsDocument,
-} from '../../schemas/entertainmentNews';
-import { NewsType } from '../../enums/newsType';
+import { NewsCategory } from '../../enums/newsCategory';
+import { isNewNewsPresent, isTimeToTweet } from '../../util/utils';
+import { NewsCountry } from '../../enums/newsCountry';
+import { NewsTimeZone } from '../../enums/newsTimeZone';
 
 @Injectable()
 export class ScraperService {
@@ -20,158 +17,67 @@ export class ScraperService {
     private configService: ConfigService,
     private readonly tweeterService: TweeterService,
     @InjectModel(News.name) private newsModel: Model<NewsDocument>,
-    @InjectModel(SportsNews.name)
-    private sportsNewsModel: Model<SportsNewsDocument>,
-    @InjectModel(EntertainmentNews.name)
-    private entertainmentNewsModel: Model<EntertainmentNewsDocument>,
   ) {}
-  TIMEOUT = 72000;
 
-  @Cron('*/30 * * * *')
-  async newsScraper() {
+  async newsScraper(
+    country: NewsCountry,
+    newsTimeZone: NewsTimeZone,
+    category: NewsCategory,
+  ) {
+    console.log('Scraping news for =>', country, category, newsTimeZone);
     try {
-      const newsInTR = await axios.get(
-        'https://newsapi.org/v2/top-headlines?country=tr&apiKey=' +
-          this.configService.get('news.tr.newsApiKey'),
+      if (!isTimeToTweet(newsTimeZone)) {
+        console.log('Not the time to tweet.');
+        return;
+      }
+
+      const newsResponse = await axios.get(
+        `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=` +
+          this.configService.get(`news.${country}.${category}NewsApiKey`),
       );
-      const last10News = newsInTR.data.articles.slice(-10) as NewsDto[];
-      // Get last 5 news in DB
-      const lastNewsInDB = await this.newsModel
-        .find()
+
+      const newsArticles: NewsDto[] = newsResponse.data.articles.slice(-10);
+      const lastNewsInDB: News[] = await this.newsModel
+        .find({ category, country })
         .sort({ _id: -1 })
         .limit(10)
         .exec();
-      // If last 10 news in DB are the same with the last 10 news in API, do nothing
-      if (!this.isNewNewsPresent(lastNewsInDB, last10News)) {
-        console.log('No new news');
+
+      if (!isNewNewsPresent(lastNewsInDB, newsArticles)) {
+        console.log('No new news.');
         return;
-      } else {
-        // Else, save the new news in DB and tweet about it if it is about politics
-        for (const news of last10News) {
-          // If the news is already in DB, do nothing
-          if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
-            console.log('News already in DB', news.title);
-            continue;
-          }
-          // Else, save the news in DB
-          const createdNews = new this.newsModel(news);
+      }
+
+      for (const news of newsArticles) {
+        if (!lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)) {
+          const createdNews = new this.newsModel({
+            ...news,
+            country,
+            category,
+          });
           const savedNews = await createdNews.save();
-          console.log('News saved => ', savedNews);
-          // Check if the news is about politics
-          const isPolitical = await this.tweeterService.isTheNewsAboutPolitics(
-            news,
-          );
-          // If it is, tweet about it
-          console.log(
-            'isPolitical => ',
-            isPolitical,
-            isPolitical.toLowerCase() === 'yes',
-          );
-          if (isPolitical?.toLowerCase() === 'yes') {
-            console.log('News is about politics');
+          console.log('News saved =>', savedNews);
+
+          if (category === NewsCategory.Politics) {
+            const isPolitical =
+              await this.tweeterService.isTheNewsAboutPolitics(news);
+            if (isPolitical?.toLowerCase() === 'yes') {
+              console.log('News is about politics.');
+              const tweet = await this.tweeterService.createTweet(news);
+              console.log('Tweet created =>', tweet);
+              continue;
+            }
+          } else {
             const tweet = await this.tweeterService.createTweet(news);
-            console.log('Tweet created => ', tweet);
-            continue;
+            console.log('Tweet created =>', tweet);
           }
+        } else {
+          console.log('News already in DB:', news.title);
         }
       }
     } catch (error) {
-      console.error('Error in newsScraper: ', error);
-      return;
+      console.error('Error in newsScraper:', error);
     }
-  }
-
-  @Cron('*/30 * * * *')
-  async sportsNewsScraper() {
-    try {
-      const newsInTR = await axios.get(
-        'https://newsapi.org/v2/top-headlines?country=tr&category=sports&apiKey=' +
-          this.configService.get('news.tr.newsSportsApiKey'),
-      );
-      const last10News = newsInTR.data.articles.slice(-10) as NewsDto[];
-      // Get last 5 news in DB
-      const lastNewsInDB = await this.sportsNewsModel
-        .find()
-        .sort({ _id: -1 })
-        .limit(10)
-        .exec();
-      // If last 5 news in DB are the same with the last 5 news in API, do nothing
-      if (!this.isNewNewsPresent(lastNewsInDB, last10News)) {
-        console.log('No new sports news');
-        return;
-      } else {
-        // Else, save the new news in DB and tweet about it if it is about politics
-        for (const news of last10News) {
-          if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
-            console.log('Sports news already in DB', news.title);
-            continue;
-          }
-          // Else, save the news in DB
-          const createdNews = new this.sportsNewsModel(news);
-          const savedNews = await createdNews.save();
-          console.log('Sports news saved => ', savedNews);
-
-          const tweet = await this.tweeterService.createTweet(
-            news,
-            NewsType.Sports,
-          );
-          console.log('Sport tweet created => ', tweet);
-        }
-      }
-    } catch (error) {
-      console.error('Error in Sport newsScraper: ', error);
-      return;
-    }
-  }
-
-  @Cron('*/30 * * * *')
-  async entertainmentNewsScraper() {
-    try {
-      const newsInTR = await axios.get(
-        'https://newsapi.org/v2/top-headlines?country=tr&category=entertainment&apiKey=' +
-          this.configService.get('news.tr.newsEntertainmentApiKey'),
-      );
-      const last10News = newsInTR.data.articles.slice(-10) as NewsDto[];
-      const lastNewsInDB = await this.entertainmentNewsModel
-        .find()
-        .sort({ _id: -1 })
-        .limit(10)
-        .exec();
-
-      if (!this.isNewNewsPresent(lastNewsInDB, last10News)) {
-        console.log('No new entertainment news');
-        return;
-      } else {
-        for (const news of last10News) {
-          // If the news is already in DB, do nothing
-          if (lastNewsInDB.find((newsInDB) => newsInDB.title === news.title)) {
-            console.log('Entertainment news already in DB', news.title);
-            continue;
-          }
-          // Else, save the news in DB
-          const createdNews = new this.entertainmentNewsModel(news);
-          const savedNews = await createdNews.save();
-          console.log('Entertainment news saved => ', savedNews);
-
-          const tweet = await this.tweeterService.createTweet(
-            news,
-            NewsType.Entertainment,
-          );
-          console.log('Entertainment tweet created => ', tweet);
-        }
-      }
-    } catch (error) {
-      console.error('Error in Entertainment newsScraper: ', error);
-      return;
-    }
-  }
-
-  isNewNewsPresent(oldNews: News[], newNews: NewsDto[]): boolean {
-    if (oldNews.length === 0) return true;
-    // Check if any item in newNews doesn't have a match in oldNews
-    return newNews.some(
-      (newsB) => !oldNews.some((newsA) => newsB.title === newsA.title),
-    );
   }
 
   async isPolitical(news: NewsDto) {

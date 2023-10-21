@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { Source } from './source';
+import { NewsCountry } from '../enums/newsCountry';
+import { NewsCategory } from '../enums/newsCategory';
 
 export type NewsDocument = HydratedDocument<News>;
 
@@ -29,6 +31,12 @@ export class News {
 
   @Prop()
   content?: string;
+
+  @Prop({ required: true })
+  country: NewsCountry;
+
+  @Prop({ required: true })
+  category: NewsCategory;
 }
 
 export const NewsSchema = SchemaFactory.createForClass(News);

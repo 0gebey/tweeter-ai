@@ -5,11 +5,6 @@ import { TweeterService } from '../tweeter/tweeter.service';
 import { ScraperController } from './scraper.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { News, NewsSchema } from '../../schemas/news';
-import { SportsNews, SportsNewsSchema } from '../../schemas/sportsNews';
-import {
-  EntertainmentNews,
-  EntertainmentNewsSchema,
-} from '../../schemas/entertainmentNews';
 
 @Module({
   imports: [
@@ -18,14 +13,6 @@ import {
       {
         name: News.name,
         schema: NewsSchema,
-      },
-      {
-        name: SportsNews.name,
-        schema: SportsNewsSchema,
-      },
-      {
-        name: EntertainmentNews.name,
-        schema: EntertainmentNewsSchema,
       },
     ]),
   ],
