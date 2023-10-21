@@ -11,10 +11,10 @@ export class CronService {
   // Run cron in every 30 minutes
   // 0 */30 * * * *
   @Cron('0 */30 * * * *')
-  runCron() {
+  async runCron() {
     for (const country of Object.keys(NewsCountry)) {
       for (const category of Object.keys(NewsCategory)) {
-        this.scrapperService.newsScraper(
+        await this.scrapperService.newsScraper(
           NewsCountry[country],
           NewsTimeZone[country],
           NewsCategory[category],

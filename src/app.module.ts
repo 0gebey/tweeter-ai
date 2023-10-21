@@ -7,7 +7,6 @@ import { ScraperModule } from './modules/scraper/scraper.module';
 import { TweeterModule } from './modules/tweeter/tweeter.module';
 import configuration from './config/configuration';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CronModule } from './cron/cron.module';
 import { CronModule } from './modules/cron/cron.module';
 
 @Module({

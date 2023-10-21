@@ -9,20 +9,6 @@ export class ScraperController {
     private readonly scraperService: ScraperService,
     private readonly configService: ConfigService,
   ) {}
-  @Get()
-  async newsScraper() {
-    this.scraperService.newsScraper();
-  }
-
-  @Get('sports')
-  async sportsNewsScraper() {
-    this.scraperService.sportsNewsScraper();
-  }
-
-  @Get('entertainment')
-  async entertainmentNewsScraper() {
-    this.scraperService.entertainmentNewsScraper();
-  }
 
   @Get('isPolitics')
   async isPolitics() {
