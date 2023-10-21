@@ -12,14 +12,22 @@ export class CronService {
   // 0 */30 * * * *
   @Cron('0 */30 * * * *')
   async runCron() {
-    for (const country of Object.keys(NewsCountry)) {
-      for (const category of Object.keys(NewsCategory)) {
-        await this.scrapperService.newsScraper(
-          NewsCountry[country],
-          NewsTimeZone[country],
-          NewsCategory[category],
-        );
+    try {
+      for (const country of Object.keys(NewsCountry)) {
+        for (const category of Object.keys(NewsCategory)) {
+          try {
+            await this.scrapperService.newsScraper(
+              NewsCountry[country],
+              NewsTimeZone[country],
+              NewsCategory[category],
+            );
+          } catch (error) {
+            console.error('error on newsScrpper', error);
+          }
+        }
       }
+    } catch (error) {
+      console.error('ERROR WHILE CREATING THE TWEET', error);
     }
   }
 }

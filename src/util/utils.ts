@@ -1,6 +1,7 @@
-import axios from 'axios';
 import { NewsDto } from '../dtos/news';
 import { News } from '../schemas/news';
+import * as url from 'url';
+import axios from 'axios';
 
 export const isTimeToTweet = (timeZone: string): boolean => {
   const currentTime = new Date(
@@ -30,26 +31,34 @@ export const isNewNewsPresent = (
   );
 };
 
-export const getSourceUrl = async (
-  rssFeedUrl: string,
-): Promise<string | null> => {
+export const getSourceUrl = async (rssFeedUrl: string): Promise<string> => {
   try {
-    const response = await axios.get(rssFeedUrl);
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(response.data, 'application/xml');
+    const parsedURL = url.parse(rssFeedUrl, true);
+    console.log('Parsed URL:', parsedURL);
 
-    // Assuming the source URL is in the 'link' element of the first 'item' element
-    const item = xmlDoc.querySelector('item');
-    if (item) {
-      const linkElement = item.querySelector('link');
-      if (linkElement) {
-        const sourceUrl = linkElement.textContent;
-        return sourceUrl;
-      }
+    // Split the pathname by '/' and find the segment that starts with 'CBMi'
+    const encodedSegment = parsedURL.pathname
+      .split('/')
+      .find((segment) => segment.startsWith('CBMi'));
+
+    if (!encodedSegment) {
+      console.error('Could not find encoded URL segment.');
+      return null;
     }
 
-    console.log('Failed to extract source URL from the RSS feed.');
-    return null;
+    // Extract the Base64 encoded URL from the segment
+    const encodedURL = encodedSegment.slice(4); // Removing the 'CBMi' prefix
+
+    // Decode the Base64 URL
+    const decodedString = Buffer.from(encodedURL, 'base64').toString('utf-8');
+
+    // Split the decoded string by non-ASCII characters and take the first segment
+    let actualURL = decodedString.split(/[^ -~]+/)[0];
+
+    // Remove any leading characters that don't belong to a standard URL
+    actualURL = actualURL.replace(/^[^https]+/, '');
+    console.log('Actual URL:', actualURL);
+    return actualURL;
   } catch (error) {
     console.error('Error fetching or parsing RSS feed:', error);
     return null;
