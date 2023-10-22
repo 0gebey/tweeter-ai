@@ -69,12 +69,20 @@ export class ScraperService {
               await this.tweeterService.isTheNewsAboutPolitics(news);
             if (isPolitical?.toLowerCase() === 'yes') {
               console.log('News is about politics.');
-              const tweet = await this.tweeterService.createTweet(news);
+              const tweet = await this.tweeterService.createTweet(
+                news,
+                country,
+                category,
+              );
               console.log('Tweet created =>', tweet);
               continue;
             }
           } else {
-            const tweet = await this.tweeterService.createTweet(news);
+            const tweet = await this.tweeterService.createTweet(
+              news,
+              country,
+              category,
+            );
             console.log('Tweet created =>', tweet);
           }
         } else {

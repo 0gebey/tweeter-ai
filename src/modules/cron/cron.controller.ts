@@ -1,9 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { CronService } from './cron.service';
 import { getSourceUrl } from '../../util/utils';
-import { NewsCategory } from '../../enums/newsCategory';
-import { NewsCountry } from '../../enums/newsCountry';
-import { NewsTimeZone } from '../../enums/newsTimeZone';
 
 @Controller('cron')
 export class CronController {

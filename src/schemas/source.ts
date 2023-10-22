@@ -5,7 +5,7 @@ export type SourceDocument = HydratedDocument<Source>;
 
 @Schema()
 export class Source {
-  @Prop({ required: true })
+  @Prop()
   id: string;
 
   @Prop({ required: true })
