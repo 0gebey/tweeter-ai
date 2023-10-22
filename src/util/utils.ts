@@ -78,6 +78,7 @@ export const getImageAsBuffer = async (
     });
 
     // Convert the binary data to a Buffer
+
     const imageBuffer = Buffer.from(response.data, 'binary');
 
     return imageBuffer;
@@ -85,4 +86,22 @@ export const getImageAsBuffer = async (
     console.error('Error fetching image:', error);
     return null;
   }
+};
+
+export const detectImageMimeType = (imageBuffer: Buffer): string => {
+  const pngSignature = '89504e47'; // PNG file signature in hexadecimal
+  const jpegSignature = 'ffd8'; // JPEG file signature in hexadecimal
+  const gifSignature = '47494638'; // GIF file signature in hexadecimal
+
+  const fileSignatureHex = imageBuffer.toString('hex', 0, 4); // Get the first 4 bytes as hexadecimal
+
+  if (fileSignatureHex === pngSignature) {
+    return 'image/png';
+  } else if (fileSignatureHex.startsWith(jpegSignature)) {
+    return 'image/jpeg';
+  } else if (fileSignatureHex.startsWith(gifSignature)) {
+    return 'image/gif';
+  }
+
+  return null; // Unknown or unsupported image format
 };

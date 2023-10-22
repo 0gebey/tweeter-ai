@@ -7,8 +7,11 @@ import { TwitterApi } from 'twitter-api-v2';
 import { LLMChain } from 'langchain/chains';
 import { NewsCategory } from '../../enums/newsCategory';
 import { NewsCountry } from '../../enums/newsCountry';
-import { getImageAsBuffer, getSourceUrl } from '../../util/utils';
-
+import {
+  detectImageMimeType,
+  getImageAsBuffer,
+  getSourceUrl,
+} from '../../util/utils';
 @Injectable()
 export class TweeterService {
   constructor(private configService: ConfigService) {}
@@ -78,9 +81,24 @@ export class TweeterService {
     news: NewsDto,
     twitterClient: TwitterApi,
   ): Promise<string | undefined> {
-    if (news.urlToImage) {
-      const image = await getImageAsBuffer(news.urlToImage);
-      return twitterClient.v1.uploadMedia(image);
+    try {
+      if (news.urlToImage) {
+        const image = await getImageAsBuffer(news.urlToImage);
+
+        const detectedType = detectImageMimeType(image);
+
+        if (detectedType) {
+          console.log('MIME Type:', detectedType);
+        } else {
+          console.log('Unknown MIME Type');
+        }
+
+        return twitterClient.v1.uploadMedia(image, {
+          mimeType: detectedType,
+        });
+      }
+    } catch (error) {
+      console.error('ERROR WHILE FETCHING MEDIA ID', error);
     }
     return undefined;
   }
@@ -90,11 +108,15 @@ export class TweeterService {
     mediaId: string,
     twitterClient: TwitterApi,
   ): Promise<any> {
-    return twitterClient.v2.tweet(tweetText, {
-      media: {
-        media_ids: [mediaId],
-      },
-    });
+    try {
+      return twitterClient.v2.tweet(tweetText, {
+        media: {
+          media_ids: [mediaId],
+        },
+      });
+    } catch (error) {
+      console.error('ERROR WHILE POSTING THE TWEET WITH MEDIA', error);
+    }
   }
 
   async postTweetWithoutMedia(
@@ -131,13 +153,14 @@ export class TweeterService {
       }
 
       const mediaId = await this.fetchMediaId(news, twitterClient);
-
+      console.log('mediaId', mediaId);
       if (mediaId) {
         const result = await this.postTweetWithMedia(
           tweetText,
           mediaId,
           twitterClient,
         );
+        console.log('result', result);
         return result.data;
       } else {
         const result = await this.postTweetWithoutMedia(
@@ -147,7 +170,7 @@ export class TweeterService {
         return result.data;
       }
     } catch (error) {
-      console.error('Tweet Error:', error.message);
+      console.error('Tweet Error:', error);
     }
   }
 }

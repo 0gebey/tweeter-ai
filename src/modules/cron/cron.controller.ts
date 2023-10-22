@@ -16,6 +16,16 @@ export class CronController {
     }
   }
 
+  @Get('/test/america')
+  async testAmerica() {
+    try {
+      const result = await this.cronService.testAmerica();
+      return result;
+    } catch (error) {
+      console.error('ERROR WHILE CREATING THE TWEET', error);
+    }
+  }
+
   @Get('/test')
   async testParser() {
     try {

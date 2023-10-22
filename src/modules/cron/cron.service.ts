@@ -26,8 +26,21 @@ export class CronService {
           }
         }
       }
+      console.log('Cron job is running...', new Date().toLocaleDateString());
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
+    }
+  }
+
+  async testAmerica() {
+    try {
+      await this.scrapperService.newsScraper(
+        NewsCountry.USA,
+        NewsTimeZone.USA,
+        NewsCategory.Sports,
+      );
+    } catch (error) {
+      console.error('error on newsScrpper', error);
     }
   }
 }

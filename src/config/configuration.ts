@@ -48,7 +48,7 @@ export default async () => ({
         clientSecret: process.env.TWITTER_ENTERTAINMENT_CLIENT_SECRET,
       },
     },
-    usa: {
+    us: {
       politics: {
         promptTemplate: process.env.PROMPT_USA_TEMPLATE,
         consumerKey: process.env.TWITTER_USA_CONSUMER_KEY,

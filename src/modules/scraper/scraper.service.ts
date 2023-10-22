@@ -50,7 +50,7 @@ export class ScraperService {
       console.log('lastNewsInDB =>', lastNewsInDB);
 
       if (!isNewNewsPresent(lastNewsInDB, newsArticles)) {
-        console.log('No new news.');
+        console.log(`No new news in ${country} for ${category}.`);
         return;
       }
 
