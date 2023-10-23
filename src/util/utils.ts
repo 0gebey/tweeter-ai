@@ -33,12 +33,16 @@ export const isNewNewsPresent = (
 
 export const getSourceUrl = async (rssFeedUrl: string): Promise<string> => {
   try {
+    console.log('RECEIVED RSS FEED URL => ', rssFeedUrl);
     const parsedURL = url.parse(rssFeedUrl, true);
+    console.log('parsedURL', parsedURL);
 
     // Split the pathname by '/' and find the segment that starts with 'CBMi'
     const encodedSegment = parsedURL.pathname
       .split('/')
       .find((segment) => segment.startsWith('CBMi'));
+
+    console.log('encodedSegment', encodedSegment);
 
     if (!encodedSegment) {
       console.error('Could not find encoded URL segment.');
@@ -104,4 +108,27 @@ export const detectImageMimeType = (imageBuffer: Buffer): string => {
   }
 
   return null; // Unknown or unsupported image format
+};
+
+export const calculateEffectiveTweetLength = (tweetText) => {
+  // Calculate the length of the URL within the tweet text
+  // Regular expression to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  // Extract URLs from the tweet text
+  const urls = tweetText.match(urlRegex) || [];
+
+  // Remove URLs from the tweet text
+  const textWithoutUrls = tweetText.replace(urlRegex, '');
+
+  // Calculate the length of the remaining text without URLs
+  const textLengthWithoutUrls = textWithoutUrls.length;
+
+  // Calculate the total URL length considering each URL as 23 characters
+  const totalUrlLength = urls.length * 23;
+
+  // Calculate the effective length of the tweet considering the included URLs
+  const effectiveTweetLength = textLengthWithoutUrls + totalUrlLength;
+  console.log('effectiveTweetLength', effectiveTweetLength);
+  return effectiveTweetLength;
 };

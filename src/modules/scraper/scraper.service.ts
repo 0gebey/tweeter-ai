@@ -47,7 +47,7 @@ export class ScraperService {
         .limit(10)
         .exec();
 
-      console.log('lastNewsInDB =>', lastNewsInDB);
+      /* console.log('lastNewsInDB =>', lastNewsInDB); */
 
       if (!isNewNewsPresent(lastNewsInDB, newsArticles)) {
         console.log(`No new news in ${country} for ${category}.`);
@@ -61,8 +61,7 @@ export class ScraperService {
             country,
             category,
           });
-          const savedNews = await createdNews.save();
-          console.log('News saved =>', savedNews);
+          await createdNews.save();
 
           if (category === NewsCategory.Politics) {
             const isPolitical =
@@ -83,7 +82,7 @@ export class ScraperService {
               country,
               category,
             );
-            console.log('Tweet created =>', tweet);
+            console.log(`Tweet created for ${country}, ${category}=>`, tweet);
           }
         } else {
           console.log('News already in DB:', news.title);

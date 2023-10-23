@@ -8,10 +8,12 @@ import { LLMChain } from 'langchain/chains';
 import { NewsCategory } from '../../enums/newsCategory';
 import { NewsCountry } from '../../enums/newsCountry';
 import {
+  calculateEffectiveTweetLength,
   detectImageMimeType,
   getImageAsBuffer,
   getSourceUrl,
 } from '../../util/utils';
+import { TwitterApiRateLimitPlugin } from '@twitter-api-v2/plugin-rate-limit';
 @Injectable()
 export class TweeterService {
   constructor(private configService: ConfigService) {}
@@ -23,6 +25,35 @@ export class TweeterService {
     category: NewsCategory = NewsCategory.Politics,
   ) {
     try {
+      const rateLimitPlugin = new TwitterApiRateLimitPlugin();
+      const twitterClient = new TwitterApi(
+        {
+          appKey: this.configService.get(
+            `twitter.${country}.${category}.consumerKey`,
+          ),
+          appSecret: this.configService.get(
+            `twitter.${country}.${category}.consumerSecret`,
+          ),
+          accessToken: this.configService.get(
+            `twitter.${country}.${category}.accessTokenKey`,
+          ),
+          accessSecret: this.configService.get(
+            `twitter.${country}.${category}.accessTokenSecret`,
+          ),
+        },
+        {
+          plugins: [rateLimitPlugin],
+        },
+      );
+      /*       const me = await twitterClient.v2.me();
+      console.log('me', me.data);
+
+      const currentRateLimitForMe = await rateLimitPlugin.v2.getRateLimit(
+        'users/me',
+      );
+
+      console.log('currentRateLimitForMe', currentRateLimitForMe);
+      if (!rateLimitPlugin.hasHitRateLimit(currentRateLimitForMe)) { */
       const openAIApiKey = await this.configService.get('openai.apiKey');
       const template = this.configService.get(
         `twitter.${country}.${category}.promptTemplate`,
@@ -45,12 +76,9 @@ export class TweeterService {
 
       console.log(tweet.content);
 
-      return await this.postTweet(
-        news,
-        tweet.content.trim(),
-        country,
-        category,
-      );
+      return await this.postTweet(news, tweet.content.trim(), twitterClient);
+      /*  }
+      console.log('Rate limit has exceeded.', currentRateLimitForMe); */
     } catch (error) {
       console.error('ERROR WHILE CREATING THE TWEET', error);
     }
@@ -59,7 +87,7 @@ export class TweeterService {
   async isTheNewsAboutPolitics(news: NewsDto) {
     const openAIApiKey = await this.configService.get('openai.apiKey');
     const prompt =
-      'Is the following sentence related to politics? Only say yes if you are sure. Yes, No. Sentence: ${sentence}';
+      'Is the following sentence related to politics or war? Only say yes if you are sure. Yes, No. Sentence: ${sentence}';
     const promptTemplate = PromptTemplate.fromTemplate(prompt);
     const chatModel = new ChatOpenAI({
       maxTokens: 1,
@@ -129,26 +157,13 @@ export class TweeterService {
   async postTweet(
     news: NewsDto,
     tweetText: string,
-    country: NewsCountry,
-    category: NewsCategory,
+    twitterClient: TwitterApi,
   ): Promise<any> {
-    const twitterClient = new TwitterApi({
-      appKey: this.configService.get(
-        `twitter.${country}.${category}.consumerKey`,
-      ),
-      appSecret: this.configService.get(
-        `twitter.${country}.${category}.consumerSecret`,
-      ),
-      accessToken: this.configService.get(
-        `twitter.${country}.${category}.accessTokenKey`,
-      ),
-      accessSecret: this.configService.get(
-        `twitter.${country}.${category}.accessTokenSecret`,
-      ),
-    });
+    const MAX_TWEET_LENGTH = 280;
 
     try {
-      if (tweetText.length > 280) {
+      const effectiveTweetLength = calculateEffectiveTweetLength(tweetText);
+      if (effectiveTweetLength > MAX_TWEET_LENGTH) {
         throw new Error('Tweet is too long');
       }
 
@@ -160,13 +175,14 @@ export class TweeterService {
           mediaId,
           twitterClient,
         );
-        console.log('result', result);
+        console.log('Result without media => ', result.data.text);
         return result.data;
       } else {
         const result = await this.postTweetWithoutMedia(
           tweetText,
           twitterClient,
         );
+        console.log('Result without media => ', result.data.text);
         return result.data;
       }
     } catch (error) {

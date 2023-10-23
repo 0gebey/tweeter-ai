@@ -35,8 +35,8 @@ export class CronService {
   async testAmerica() {
     try {
       await this.scrapperService.newsScraper(
-        NewsCountry.USA,
-        NewsTimeZone.USA,
+        NewsCountry.Turkey,
+        NewsTimeZone.Turkey,
         NewsCategory.Sports,
       );
     } catch (error) {
