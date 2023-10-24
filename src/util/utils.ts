@@ -55,11 +55,17 @@ export const getSourceUrl = async (rssFeedUrl: string): Promise<string> => {
     // Decode the Base64 URL
     const decodedString = Buffer.from(encodedURL, 'base64').toString('utf-8');
 
+    console.log('Decodedstring: ', decodedString);
+
     // Split the decoded string by non-ASCII characters and take the first segment
     let actualURL = decodedString.split(/[^ -~]+/)[0];
 
+    console.log('actualURL: ', actualURL);
+
     // Remove any leading characters that don't belong to a standard URL
     actualURL = actualURL.replace(/^[^https]+/, '');
+
+    console.log('actualURL last: ', actualURL);
     // https://ay.live/api/?api=386c567d1cd756be36107fffe7a9462bd07bbae3&url=yourdestinationlink.com&alias=&format=text&ct=1
     /*     const shortenedURL = await axios.get(
       `https://ay.live/api/?api=386c567d1cd756be36107fffe7a9462bd07bbae3&url=${actualURL}&alias=&format=text&ct=1`,

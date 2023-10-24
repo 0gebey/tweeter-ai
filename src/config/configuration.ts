@@ -16,6 +16,12 @@ export default async () => ({
   },
   twitter: {
     tr: {
+      parameters: {
+        source: 'kaynak',
+        news: 'haber',
+        description: 'açıklama',
+        url: 'link',
+      },
       politics: {
         promptTemplate: process.env.PROMPT_TEMPLATE,
         consumerKey: process.env.TWITTER_CONSUMER_KEY,
@@ -49,6 +55,12 @@ export default async () => ({
       },
     },
     us: {
+      parameters: {
+        source: 'source',
+        news: 'news',
+        description: 'description',
+        url: 'url',
+      },
       politics: {
         promptTemplate: process.env.PROMPT_USA_TEMPLATE,
         consumerKey: process.env.TWITTER_USA_CONSUMER_KEY,

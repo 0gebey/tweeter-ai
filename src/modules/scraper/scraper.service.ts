@@ -56,6 +56,9 @@ export class ScraperService {
 
       for (const news of newsArticles) {
         if (!lastNewsInDB.some((newsInDB) => newsInDB.title === news.title)) {
+          if (news.title.includes('remove')) {
+            continue;
+          }
           const createdNews = new this.newsModel({
             ...news,
             country,

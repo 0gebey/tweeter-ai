@@ -67,11 +67,31 @@ export class TweeterService {
       if (news.url.startsWith('https://news.google.com/rss/articles')) {
         news.url = await getSourceUrl(news.url);
       }
+      console.log(
+        'this.configService.get(`twitter.${country}.parameters.news`)',
+        this.configService.get(`twitter.${country}.parameters.news`),
+      );
+      console.log(
+        'this.configService.get(`twitter.${country}.parameters.description`)',
+        this.configService.get(`twitter.${country}.parameters.description`),
+      );
+      console.log(
+        'this.configService.get(`twitter.${country}.parameters.source`)',
+        this.configService.get(`twitter.${country}.parameters.source`),
+      );
+      console.log(
+        'this.configService.get(`twitter.${country}.parameters.url`)',
+        this.configService.get(`twitter.${country}.parameters.url`, news.url),
+      );
+
       const tweet = await chain.invoke({
-        news: news.title,
-        description: news.description,
-        source: news.author,
-        url: news.url,
+        [this.configService.get(`twitter.${country}.parameters.news`)]:
+          news.title,
+        [this.configService.get(`twitter.${country}.parameters.description`)]:
+          news.description,
+        [this.configService.get(`twitter.${country}.parameters.source`)]:
+          news.author,
+        [this.configService.get(`twitter.${country}.parameters.url`)]: news.url,
       });
 
       console.log(tweet.content);

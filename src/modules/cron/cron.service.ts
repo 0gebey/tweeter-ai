@@ -37,7 +37,7 @@ export class CronService {
       await this.scrapperService.newsScraper(
         NewsCountry.Turkey,
         NewsTimeZone.Turkey,
-        NewsCategory.Sports,
+        NewsCategory.Entertainment,
       );
     } catch (error) {
       console.error('error on newsScrpper', error);
