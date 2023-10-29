@@ -12,6 +12,7 @@ import {
   detectImageMimeType,
   getImageAsBuffer,
   getSourceUrl,
+  hasURL,
 } from '../../util/utils';
 import { TwitterApiRateLimitPlugin } from '@twitter-api-v2/plugin-rate-limit';
 @Injectable()
@@ -67,22 +68,6 @@ export class TweeterService {
       if (news.url.startsWith('https://news.google.com/rss/articles')) {
         news.url = await getSourceUrl(news.url);
       }
-      console.log(
-        'this.configService.get(`twitter.${country}.parameters.news`)',
-        this.configService.get(`twitter.${country}.parameters.news`),
-      );
-      console.log(
-        'this.configService.get(`twitter.${country}.parameters.description`)',
-        this.configService.get(`twitter.${country}.parameters.description`),
-      );
-      console.log(
-        'this.configService.get(`twitter.${country}.parameters.source`)',
-        this.configService.get(`twitter.${country}.parameters.source`),
-      );
-      console.log(
-        'this.configService.get(`twitter.${country}.parameters.url`)',
-        this.configService.get(`twitter.${country}.parameters.url`, news.url),
-      );
 
       const tweet = await chain.invoke({
         [this.configService.get(`twitter.${country}.parameters.news`)]:
@@ -185,6 +170,11 @@ export class TweeterService {
       const effectiveTweetLength = calculateEffectiveTweetLength(tweetText);
       if (effectiveTweetLength > MAX_TWEET_LENGTH) {
         throw new Error('Tweet is too long');
+      }
+      if (!hasURL(tweetText)) {
+        const changes = ['url', 'link', 'link:', 'url:'];
+        const change = changes.find((change) => tweetText.includes(change));
+        tweetText = tweetText.replace(change, news.url).replace('[', '');
       }
 
       const mediaId = await this.fetchMediaId(news, twitterClient);

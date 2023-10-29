@@ -138,3 +138,17 @@ export const calculateEffectiveTweetLength = (tweetText) => {
   console.log('effectiveTweetLength', effectiveTweetLength);
   return effectiveTweetLength;
 };
+
+export const hasURL = (tweetText: string): boolean => {
+  // Regular expression to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  // Extract URLs from the tweet text
+  const urls = tweetText.match(urlRegex) || [];
+
+  if (urls.length > 0) {
+    return true;
+  }
+
+  return false;
+};
