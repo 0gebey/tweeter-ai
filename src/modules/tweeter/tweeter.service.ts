@@ -69,7 +69,7 @@ export class TweeterService {
         news.url = await getSourceUrl(news.url);
       }
 
-      const tweet = await chain.invoke({
+      /*       const tweet = await chain.invoke({
         [this.configService.get(`twitter.${country}.parameters.news`)]:
           news.title,
         [this.configService.get(`twitter.${country}.parameters.description`)]:
@@ -77,6 +77,13 @@ export class TweeterService {
         [this.configService.get(`twitter.${country}.parameters.source`)]:
           news.author,
         [this.configService.get(`twitter.${country}.parameters.url`)]: news.url,
+      }); */
+
+      const tweet = await chain.invoke({
+        news: news.title,
+        description: news.description,
+        source: news.author,
+        url: news.url,
       });
 
       console.log(tweet.content);
@@ -174,7 +181,12 @@ export class TweeterService {
       if (!hasURL(tweetText)) {
         const changes = ['url', 'link', 'link:', 'url:'];
         const change = changes.find((change) => tweetText.includes(change));
-        tweetText = tweetText.replace(change, news.url).replace('[', '');
+        tweetText = tweetText
+          .replace(change, news.url)
+          .replace('[', '')
+          .replace(']', '')
+          .replace(':', '')
+          .trim();
       }
 
       const mediaId = await this.fetchMediaId(news, twitterClient);
